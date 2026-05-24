@@ -10,7 +10,17 @@ ENDPOINT = "https://syndication.twitter.com/srv/timeline-profile/screen-name/{us
 
 TRACKED_ACCOUNTS = [
     {"username": "aleabitoreddit", "name": "Serenity", "tags": ["AI/半导体", "窭口", "轧空"]},
-    {"username": "MarioNawfal", "name": "Mario Nawfal", "tags": ["M&A/AI", "并购", "全球宏观"]},
+    {"username": "morganhousel", "name": "Morgan Housel", "tags": ["投资心法", "市场心理学", "长期投资"]},
+    {"username": "BrianFeroldi", "name": "Brian Feroldi", "tags": ["财报分析", "估值", "基本面"]},
+    {"username": "LizAnnSonders", "name": "Liz Ann Sonders", "tags": ["宏观策略", "市场分析", "Charles Schwab"]},
+    {"username": "10kdiver", "name": "10kdiver", "tags": ["复利", "概率思维", "长线程教育"]},
+    {"username": "charliebilello", "name": "Charlie Bilello", "tags": ["市场数据", "ETF统计", "历史统计"]},
+    {"username": "awealthofcs", "name": "Ben Carlson", "tags": ["长期投资", "理性投资", "Common Sense"]},
+    {"username": "elerianm", "name": "Mohamed El-Erian", "tags": ["宏观经济", "经济学家", "全球市场"]},
+    {"username": "ritholtz", "name": "Barry Ritholtz", "tags": ["市场洞见", "反共识", "价值投资"]},
+    {"username": "alphatrends", "name": "Brian Shannon", "tags": ["技术分析", "趋势", "图表"]},
+    {"username": "Scottrades", "name": "Scottrades", "tags": ["波段交易", "Swing Trading", "实战"]},
+    {"username": "ripster47", "name": "ripster47", "tags": ["每日交易回顾", "水平线分析", "实战"]},
 ]
 
 SKIP_SYMBOLS = {
