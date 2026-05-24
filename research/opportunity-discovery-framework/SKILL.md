@@ -58,6 +58,11 @@ Alpaca Paper（执行）
 | **@alphatrends** (Brian Shannon CMT) | 技术分析，30年经验 | SPY/QQQ/SMH每日分析，支撑阻力，期权教育 | RSS.app生成feed |
 | **@TheValueist** | 价值投资+供应链 | InP/CPO等关键材料chokepoint | 虎哥转发 |
 | **@NuttyCLD** | 供应链+韩国半导体 | Korea AI半导体被低估逻辑 | 虎哥转发 |
+| **@morganhousel** | 《The Psychology of Money》作者 | 市场心理学、长期投资智慧 | 虎哥转发 |
+| **@LizAnnSonders** | Charles Schwab首席策略师 | 数据驱动宏观分析、图表解读 | 虎哥转发 |
+| **@awealthofcommonsense** (Ben Carlson) | A Wealth of Common Sense | 理性长期投资视角 | 虎哥转发 |
+| **@ritholtz** (Barry Ritholtz) | Bloomberg/资深投资者 | 反共识市场洞见 | 虎哥转发 |
+| **@elerianm** (Mohamed El-Erian) | 知名经济学家 | 宏观经济与股市深度评论 | 虎哥转发 |
 
 ### P2 — 补充（宏观预警 & AI投资逻辑）
 
