@@ -34,9 +34,22 @@ auto_trade_executor.py → 自动市价买入
 
 | 来源 | 工具 | 内容 | 状态 |
 |------|------|-------|------|
-| **syndication.twitter.com** | x_hunter.py | 完整推文JSON，183条历史 | ✅ 主数据源 |
+| **syndication.twitter.com** | x_hunter.py | 完整推文JSON，~100条/博主 | ✅ 主数据源（IP限流） |
+| **fxtwitter.com** | 备用 | 单条推文完整内容 | ✅ 备用（限流时用） |
 | twiscan.com | 备用 | $代码+截断上下文 | ⚠️ 备用 |
 | 硬编码SI库 | scan_short_squeeze.py | 高做空比例股 | ✅ |
+
+### ⚠️ syndication rate limit 说明
+
+syndication.twitter.com 是IP级别的限流，实测：
+- 新IP/间隔请求: 前几次正常（aleabitoreddit实测183条推文）
+- 短时间多博主连续拉取: "Rate limit exceeded"
+- 恢复时间: 几分钟到几小时
+
+**应对策略**：
+1. 每批次请求间隔10秒以上，避免连续拉取
+2. 触发限流后，用 fxtwitter 单条读取具体推文
+3. twiscan.com 备用（数据截断但无需认证）
 
 ## 语义分析逻辑
 
@@ -56,12 +69,25 @@ auto_trade_executor.py → 自动市价买入
 | **LONG_SQ**（空头溺水）| 做空者水下 | 5%资金 | 10% | +40% |
 | **LONG**（强逻辑）| 窭口垄断+产业逻辑 | 3%资金 | 8% | +25% |
 
-## 监控博主
+## 监控博主（已验证可用）
 
-| 用户名 | 专长 | 数据源 |
-|--------|------|--------|
-| aleabitoreddit (Serenity) | AI/半导体窭口+轧空 | syndication ✅ |
-| MarioNawfal | M&A/AI/全球宏观 | syndication ⚠️ |
+> 来源: @panexorcist 推荐 + 芝麻验证
+
+| 用户名 | 专长 | syndication |
+|--------|------|------------|
+| aleabitoreddit (Serenity) | AI/半导体窭口+轧空 | ✅ |
+| morganhousel | 《金钱心理学》作者，投资心法 | ✅ 104条 |
+| BrianFeroldi | 财报分析+估值教学 | ✅ 99条 |
+| LizAnnSonders | Charles Schwab首席策略师 | ✅ 101条 |
+| 10kdiver | 复利/概率长线程教育 | ✅ 100条 |
+| charliebilello | 市场数据/ETF统计 | ✅ 104条 |
+| awealthofcs (Ben Carlson) | 长期理性投资 | ✅ 103条 |
+| elerianm (Mohamed El-Erian) | 经济学家/宏观 | ✅ 101条 |
+| ritholtz (Barry Ritholtz) | 市场洞见/反共识 | ✅ 111条 |
+| alphatrends (Brian Shannon) | 技术分析趋势 | ✅ 103条 |
+| Scottrades | 波段交易实战 | ✅ 105条 |
+| ripster47 | 每日交易回顾 | ✅ 29条 |
+| MarioNawfal | M&A/AI/全球宏观 | ⚠️ rate limit严格 |
 
 ## 关键文件
 
@@ -107,21 +133,15 @@ cd /root/venv_zhima && python3 scripts/hunting_pipeline.py
 python3 /root/venv_zhima/scripts/financial_analyzer.py <ticker>
 ```
 
-**筛选候选股**：
-```python
-from scripts.financial_analyzer import screen_stocks
-screen_stocks({"minMarketCap": 1e9, "maxPe": 30, "minGrowth": 0.1})
-```
-
 **添加新博主**（在x_hunter.py中修改TRACKED_ACCOUNTS）：
 ```python
 TRACKED_ACCOUNTS = [
     {"username": "aleabitoreddit", "name": "Serenity", "tags": ["AI/半导体", "窭口", "轧空"]},
-    {"username": "MarioNawfal", "name": "Mario Nawfal", "tags": ["M&A/AI", "并购"]},
+    {"username": "morganhousel", "name": "Morgan Housel", "tags": ["投资心法", "市场心理学"]},
 ]
 ```
 
 ## 限制
-- syndication接口rate limit严格，测几百个博主大多被限流
+- syndication接口rate limit严格（IP级别），需控制请求频率
 - 实时性依赖虎哥转发推文链接
 - xurl未认证，无法主动拉取X时间线
