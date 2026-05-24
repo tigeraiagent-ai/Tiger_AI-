@@ -117,13 +117,107 @@ python3 /root/venv_zhima/scripts/twitter_hunter.py
 }
 ```
 
-## 验证结果（2026-05-23）
+## 技术细节
 
-- ✅ syndication endpoint对@aleabitoreddit可返回99条推文
-- ⚠️ syndication有rate limit（每账号每24h上限，缓存设计消除重复请求）
-- ⚠️ Jina Reader可抓取单条推文内容（`https://r.jina.ai/https://x.com/{user}/status/{id}`）
-- ✅ Ollama llama3.2:3b可正常做语义分析
-- ⚠️ 当前被rate limit限制，缓存建立后24h内不再请求
+### Twitter syndication endpoint（主力方案）
+
+```
+GET https://syndication.twitter.com/srv/timeline-profile/screen-name/{username}
+Headers: User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)
+         Accept: application/json, text/html
+```
+
+返回HTML，其中`<script id="__NEXT_DATA__">`包含完整timeline JSON：
+```python
+import re, json, requests
+
+def extract_tweets_via_syndication(username):
+    url = f"https://syndication.twitter.com/srv/timeline-profile/screen-name/{username}"
+    r = requests.get(url, timeout=15, headers={
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
+        "Accept": "application/json, text/html"
+    })
+    if r.status_code == 200:
+        # 解析__NEXT_DATA__
+        m = re.search(r'<script id="__NEXT_DATA__" type="application/json">([\s\S]+?)</script>', r.text)
+        if m:
+            data = json.loads(m.group(1))
+            return data["props"]["pageProps"]["timeline"]["entries"]
+    return []
+```
+
+**关键发现（2026-05-23）**：
+- syndication返回完整timeline（@aleabitoreddit实测99条）
+- ⚠️ 有rate limit：连续请求返回429 "Rate limit exceeded"
+- **解决：24小时缓存**（每个账号每24h最多抓取1次，缓存写入`/root/venv_zhima/logs/hunter/cache/{username}.json`）
+
+### Jina Reader降级方案（单推文）
+
+```python
+def jina_fetch_tweet(screen_name, status_id):
+    url = f"https://r.jina.ai/https://x.com/{screen_name}/status/{status_id}"
+    r = requests.get(url, headers={"Accept": "text/markdown"})
+    return r.text  # 返回Markdown格式
+```
+
+### 已验证失败方案
+
+| 方案 | 状态 | 原因 |
+|------|------|------|
+| Nitter RSS | ❌ 失效 | 所有公开实例已下线（nitter.net/nitter.privacydev.net均不可用） |
+| rss.app | ❌ 需付费 | API key收费 |
+| rsshub.app | ❌ 失效 | X平台封禁第三方抓取 |
+| Jina直接读X主页 | ❌ 内容不完整 | X页面JS渲染，Jina无法获取完整内容 |
+| Twitter Atom feed | ❌ 重定向HTML | x.com/{user}/rss返回268KB HTML，非XML |
+
+### Ollama语义分析
+
+```python
+OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
+
+def ollama(prompt, system="", temp=0.3):
+    r = requests.post(OLLAMA_URL, json={
+        "model": "llama3.2:3b",
+        "prompt": prompt,
+        "system": system,
+        "stream": False
+    }, timeout=120)
+    return r.json().get("response", "").strip()
+```
+
+### 24h缓存策略
+
+```python
+def is_cache_fresh(username, max_age_hours=24):
+    cache_file = f"/root/venv_zhima/logs/hunter/cache/{username}.json"
+    try:
+        with open(cache_file) as f:
+            last_fetch = datetime.fromisoformat(json.load(f)["last_fetch"])
+            return (datetime.now() - last_fetch).total_seconds() / 3600 < max_age_hours
+    except:
+        return False
+```
+
+### 验证命令
+
+```bash
+# 测试单一账号抓取
+cd /root/venv_zhima && python3 -c "
+from scripts.twitter_hunter import fetch_via_syndication
+tweets, rl = fetch_via_syndication('aleabitoreddit')
+print(f'OK: {len(tweets)}条' if tweets else f'Rate limited: {rl}')
+"
+
+# 完整狩猎
+python3 /root/venv_zhima/scripts/twitter_hunter.py --analyze
+```
+
+### 已知限制
+
+- syndication rate limit：同一IP大量请求后全天429（缓存解决）
+- Jina Reader无法抓取X主页timeline（只能单推文）
+- 所有Nitter实例已失效
+- 无免费方案获取转推/回复（只有timeline内嵌推文）
 
 ## cron调度
 
